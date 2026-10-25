@@ -6,7 +6,8 @@ from src.http.exceptions import ParseError
 
 _URL_RE = re.compile(
     r"^(?P<scheme>https?)://(?P<host>[^/:?#]+)(?::(?P<port>\d+))?"
-    r"(?P<path>/[^?#]*)?(?:\?(?P<query>[^#]*))?(?:#.*)?$"
+    r"(?P<path>/[^?#]*)?(?:\?(?P<query>[^#]*))?(?:#.*)?$",
+    re.IGNORECASE,
 )
 
 
@@ -26,7 +27,7 @@ class Url:
         match = _URL_RE.match(raw.strip())
         if not match:
             raise ParseError(f"Некорректный URL: {raw!r}")
-        scheme = match.group("scheme")
+        scheme = match.group("scheme").lower()
         port_s = match.group("port")
         port = int(port_s) if port_s else (443 if scheme == "https" else 80)
         if not 1 <= port <= 65535:

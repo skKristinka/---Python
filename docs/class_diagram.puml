@@ -1,0 +1,45 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+interface RequestHandler { +handle(Request): Response }
+interface Transport { +send_all(bytes) +recv(int): bytes +close() }
+
+class Url { +scheme +host +port +path +query +parse(str)$ +target }
+class Request { +method +path +version +headers +body }
+class Response { +status +reason +version +headers +body }
+class Parser { +parse_request(bytes) +parse_response(bytes) }
+class Serializer { +serialize_request(Request) +serialize_response(Response) }
+class Socket { +send_all() +recv() +close() }
+class TcpClient { +connect(host, port): Socket }
+class TcpServer { +start() +accept() +stop() }
+class HttpClient { +get(url) +post(url, body) }
+class HttpServer { +start() +stop() +log_queue }
+class Router { +route(method, path, handler) +dispatch(Request): Response }
+class App
+class ClientTab
+class ServerTab
+class HeaderTable
+class LogTable
+
+Transport <|.. Socket
+Parser ..> Request
+Parser ..> Response
+Serializer ..> Request
+Serializer ..> Response
+TcpClient --> Socket
+HttpClient --> TcpClient
+HttpClient --> Parser
+HttpClient --> Serializer
+HttpClient ..> Url
+HttpServer --> TcpServer
+HttpServer --> Router
+HttpServer --> Parser
+HttpServer --> Serializer
+Router ..> RequestHandler
+App *-- ClientTab
+App *-- ServerTab
+ClientTab --> HttpClient
+ClientTab *-- HeaderTable
+ServerTab --> HttpServer
+ServerTab *-- LogTable
+@enduml

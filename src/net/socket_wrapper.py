@@ -6,7 +6,7 @@ from src.interfaces import Transport
 
 
 class Socket(Transport):
-    """Сокет, который закрывается через with."""
+    """Сокет, который гарантированно закрывается через with."""
 
     def __init__(self, sock: socket.socket):
         self._sock: Optional[socket.socket] = sock
@@ -17,8 +17,14 @@ class Socket(Transport):
     def __exit__(self, *exc) -> None:
         self.close()
 
+    def _require(self) -> socket.socket:
+        """Вернуть живой сокет или бросить ConnectionError."""
+        if self._sock is None:
+            raise ConnectionError("Сокет уже закрыт")
+        return self._sock
+
     def close(self) -> None:
-        """Закрыть сокет."""
+        """Закрыть сокет (повторный вызов безопасен)."""
         if self._sock is not None:
             try:
                 self._sock.close()
@@ -27,8 +33,8 @@ class Socket(Transport):
 
     def send_all(self, data: bytes) -> None:
         """Отправить все данные."""
-        self._sock.sendall(data)
+        self._require().sendall(data)
 
     def recv(self, size: int) -> bytes:
-        """Принять до size байт."""
-        return self._sock.recv(size)
+        """Принять до size байт (пустые байты — соединение закрыто)."""
+        return self._require().recv(size)

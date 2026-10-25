@@ -23,7 +23,7 @@ class Parser:
         head, rest = self._split(raw)
         lines = head.split("\r\n")
         method, path, version = self._parse_request_line(lines[0])
-        headers = self._parse_headers(lines[1:])
+        headers = self.parse_headers(lines[1:])
         if version == "HTTP/1.1" and "Host" not in headers:
             raise ParseError("Отсутствует обязательный заголовок Host")
         body = self._read_body(headers, rest, until_close=False)
@@ -34,7 +34,7 @@ class Parser:
         head, rest = self._split(raw)
         lines = head.split("\r\n")
         version, status, reason = self._parse_status_line(lines[0])
-        headers = self._parse_headers(lines[1:])
+        headers = self.parse_headers(lines[1:])
         if status in _NO_BODY_STATUSES or 100 <= status < 200:
             body = b""
         else:
@@ -84,7 +84,7 @@ class Parser:
         return parts[0], status, reason
 
     @staticmethod
-    def _parse_headers(lines) -> Dict[str, str]:
+    def parse_headers(lines) -> Dict[str, str]:
         """Разобрать строки «Name: value»; имена приводятся к виду Title-Case."""
         headers: Dict[str, str] = {}
         for line in lines:

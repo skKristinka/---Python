@@ -31,6 +31,14 @@ class Socket(Transport):
             finally:
                 self._sock = None
 
+    def shutdown(self) -> None:
+        """Прервать приём и передачу (будит поток, ждущий в recv)."""
+        if self._sock is not None:
+            try:
+                self._sock.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                pass
+
     def send_all(self, data: bytes) -> None:
         """Отправить все данные."""
         self._require().sendall(data)

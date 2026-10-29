@@ -3,7 +3,7 @@ import re
 from typing import Optional
 
 from src.http.exceptions import ParseError
-from src.http.parser import MAX_HEADER_SIZE, Parser
+from src.http.parser import MAX_HEADER_SIZE, Parser, is_ascii_digits
 from src.interfaces import Transport
 
 MAX_BODY_SIZE = 10 * 1024 * 1024
@@ -32,7 +32,7 @@ def read_message(transport: Transport, is_response: bool) -> bytes:
         return bytes(buf)
     length = headers.get("Content-Length")
     if length is not None:
-        if not length.isdigit():
+        if not is_ascii_digits(length):
             raise ParseError(f"Некорректный Content-Length: {length!r}")
         if int(length) > MAX_BODY_SIZE:
             raise ParseError("Тело превышает допустимый размер")
@@ -86,7 +86,7 @@ def _read_until_close(transport: Transport, buf: bytearray, body_start: int) -> 
 def _has_no_body(status_line: str) -> bool:
     """У ответов 1xx, 204 и 304 тела нет."""
     parts = status_line.split(" ", 2)
-    status = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 0
+    status = int(parts[1]) if len(parts) > 1 and is_ascii_digits(parts[1]) else 0
     return status in (204, 304) or 100 <= status < 200
 
 

@@ -140,3 +140,15 @@ def test_response_204_has_no_body():
 def test_response_bad_status_line(line):
     with pytest.raises(ParseError):
         parser.parse_response(line + b"\r\n\r\n")
+
+
+@pytest.mark.parametrize("value", ["\u00b2", "\uff18\uff10", "\u0663"])
+def test_unicode_digits_in_content_length_are_parse_error(value):
+    raw = f"POST / HTTP/1.1\r\nHost: h\r\nContent-Length: {value}\r\n\r\n".encode("utf-8")
+    with pytest.raises(ParseError):
+        parser.parse_request(raw)
+
+
+def test_unicode_digits_in_status_are_parse_error():
+    with pytest.raises(ParseError):
+        parser.parse_response("HTTP/1.1 \u00b2\u00b2\u00b2 X\r\n\r\n".encode("utf-8"))

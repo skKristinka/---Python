@@ -4,7 +4,7 @@ from src.gui.app import App
 
 def main() -> None:
     """Запустить приложение."""
-    App()
+    App().run()
 
 
 if __name__ == "__main__":

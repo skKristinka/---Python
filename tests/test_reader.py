@@ -103,3 +103,14 @@ def test_huge_content_length_is_rejected():
     raw = b"HTTP/1.1 200 OK\r\nContent-Length: 99999999999\r\n\r\n"
     with pytest.raises(ParseError):
         read_message(FakeTransport([raw]), True)
+
+
+def test_unicode_digit_content_length_is_parse_error():
+    raw = "HTTP/1.1 200 OK\r\nContent-Length: \u00b2\r\n\r\n".encode("iso-8859-1")
+    with pytest.raises(ParseError):
+        read_message(FakeTransport([raw]), True)
+
+
+def test_unicode_digit_status_does_not_crash_reader():
+    raw = "HTTP/1.1 \u00b2\u00b2\u00b2 X\r\nContent-Length: 0\r\n\r\n".encode("iso-8859-1")
+    assert read_message(FakeTransport([raw], eof=False), True) == raw

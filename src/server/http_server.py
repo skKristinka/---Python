@@ -131,6 +131,8 @@ class HttpServer:
                 self._serve_requests(sock)
         except OSError as exc:
             logger.debug("Соединение прервано: %s", exc)
+        except Exception:  # pylint: disable=broad-except
+            logger.exception("Непредвиденная ошибка в потоке соединения")
         finally:
             with self._lock:
                 self._connections.discard(sock)

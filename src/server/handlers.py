@@ -2,6 +2,7 @@
 import json
 from datetime import datetime, timezone
 
+from src.http.parser import is_ascii_digits
 from src.http.request import Request
 from src.http.response import Response
 from src.server.router import Router
@@ -44,7 +45,7 @@ def headers(req: Request) -> Response:
 def status(req: Request) -> Response:
     """GET /status/<code> — ответ с указанным кодом (200-599), иначе 400."""
     raw_code = req.path.split("?", 1)[0].rsplit("/", 1)[-1]
-    if not raw_code.isdigit() or not 200 <= int(raw_code) <= 599:
+    if not is_ascii_digits(raw_code) or not 200 <= int(raw_code) <= 599:
         return Response(status=400, headers={"Content-Type": _TEXT},
                         body=b"400 Bad Request: status code must be 200-599")
     response = Response(status=int(raw_code))

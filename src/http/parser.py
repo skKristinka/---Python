@@ -15,6 +15,11 @@ _HEX_RE = re.compile(rb"^[0-9A-Fa-f]+$")
 _NO_BODY_STATUSES = (204, 304)
 
 
+def is_ascii_digits(text: str) -> bool:
+    """Только цифры 0-9 (str.isdigit пропускает «²» и полноширинные цифры)."""
+    return text.isascii() and text.isdigit()
+
+
 class Parser:
     """Парсер HTTP (запрос/ответ, Content-Length, chunked)."""
 
@@ -75,7 +80,7 @@ class Parser:
         parts = line.split(" ", 2)
         if len(parts) < 2 or parts[0] not in _VERSIONS:
             raise ParseError(f"Некорректная строка статуса: {line!r}")
-        if not (parts[1].isdigit() and len(parts[1]) == 3):
+        if not (is_ascii_digits(parts[1]) and len(parts[1]) == 3):
             raise ParseError(f"Некорректный код статуса: {parts[1]!r}")
         status = int(parts[1])
         if not 100 <= status <= 599:
@@ -100,7 +105,7 @@ class Parser:
             return self._decode_chunked(rest)
         length = headers.get("Content-Length")
         if length is not None:
-            if not length.isdigit():
+            if not is_ascii_digits(length):
                 raise ParseError(f"Некорректный Content-Length: {length!r}")
             size = int(length)
             if len(rest) < size:

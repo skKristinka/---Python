@@ -225,3 +225,9 @@ def test_port_in_use_is_connection_error():
 
 def test_stop_without_start_is_safe():
     HttpServer(build_router(), port=0).stop()
+
+
+def test_weird_content_length_gets_400_and_server_survives(server):
+    data = b"POST / HTTP/1.1\r\nHost: h\r\nContent-Length: \xb2\r\n\r\n"
+    assert raw_exchange(server.port, data).startswith(b"HTTP/1.1 400")
+    assert HttpClient(timeout=2).get(url(server)).status == 200

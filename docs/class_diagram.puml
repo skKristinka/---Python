@@ -1,45 +1,142 @@
 @startuml
+title Диаграмма классов: ядро (http, net, client, server)
 skinparam classAttributeIconSize 0
+skinparam shadowing false
+left to right direction
 
-interface RequestHandler { +handle(Request): Response }
-interface Transport { +send_all(bytes) +recv(int): bytes +close() }
+package "interfaces" {
+  interface RequestHandler {
+    +handle(request): Response
+  }
+  interface Transport {
+    +send_all(data)
+    +recv(size): bytes
+    +close()
+  }
+}
+package "http" {
+  class Url <<dataclass>> {
+    +scheme
+    +host
+    +port
+    +path
+    +query
+    +parse(raw): Url {static}
+    +target: str
+  }
+  class Request <<dataclass>> {
+    +method
+    +path
+    +version
+    +headers
+    +body
+  }
+  class Response <<dataclass>> {
+    +status
+    +reason
+    +version
+    +headers
+    +body
+  }
+  class Parser {
+    +parse_request(raw): Request
+    +parse_response(raw): Response
+    +parse_headers(lines) {static}
+  }
+  class Serializer {
+    +serialize_request(req): bytes
+    +serialize_response(resp): bytes
+  }
+  class reader <<module>> {
+    +read_message(transport, is_response): bytes
+  }
+  class ParseError <<exception>>
+  class HttpError <<exception>> {
+    +status
+  }
+}
+package "net" {
+  class Socket {
+    +send_all(data)
+    +recv(size)
+    +shutdown()
+    +close()
+    +__enter__() / __exit__()
+  }
+  class TcpClient {
+    +timeout
+    +connect(host, port, use_tls): Socket
+  }
+  class TcpServer {
+    +host
+    +port
+    +start()
+    +accept()
+    +stop()
+  }
+}
+package "client" {
+  class HttpClient {
+    +timeout
+    +max_redirects
+    +raise_for_status
+    +get(url, headers)
+    +post(url, body, content_type)
+    +request(method, url, headers, body)
+  }
+}
+package "server" {
+  class HttpServer {
+    +handler
+    +port
+    +host
+    +log_queue
+    +start()
+    +stop()
+    +is_running
+    +active_connections
+  }
+  class Router {
+    +route(method, path, handler)
+    +route_prefix(method, prefix, h)
+    +dispatch(req): Response
+    +handle(req): Response
+  }
+  class LogEntry <<dataclass>> {
+    +time
+    +method
+    +path
+    +status
+    +ms
+  }
+  class handlers <<module>> {
+    +index, echo, server_time, headers, status
+    +build_router(): Router
+  }
+}
 
-class Url { +scheme +host +port +path +query +parse(str)$ +target }
-class Request { +method +path +version +headers +body }
-class Response { +status +reason +version +headers +body }
-class Parser { +parse_request(bytes) +parse_response(bytes) }
-class Serializer { +serialize_request(Request) +serialize_response(Response) }
-class Socket { +send_all() +recv() +close() }
-class TcpClient { +connect(host, port): Socket }
-class TcpServer { +start() +accept() +stop() }
-class HttpClient { +get(url) +post(url, body) }
-class HttpServer { +start() +stop() +log_queue }
-class Router { +route(method, path, handler) +dispatch(Request): Response }
-class App
-class ClientTab
-class ServerTab
-class HeaderTable
-class LogTable
-
-Transport <|.. Socket
+Socket ..|> Transport
+Router ..|> RequestHandler
 Parser ..> Request
 Parser ..> Response
 Serializer ..> Request
 Serializer ..> Response
-TcpClient --> Socket
+Parser ..> ParseError
+reader --> Transport
+reader ..> Parser
+TcpClient ..> Socket
 HttpClient --> TcpClient
 HttpClient --> Parser
 HttpClient --> Serializer
 HttpClient ..> Url
+HttpClient ..> reader
+HttpClient ..> HttpError
 HttpServer --> TcpServer
-HttpServer --> Router
+HttpServer --> RequestHandler
 HttpServer --> Parser
 HttpServer --> Serializer
-Router ..> RequestHandler
-App *-- ClientTab
-App *-- ServerTab
-ClientTab --> HttpClient
-ClientTab *-- HeaderTable
-ServerTab --> HttpServer
-ServerTab *-- LogTable
+HttpServer ..> reader
+HttpServer o-- Socket
+HttpServer ..> LogEntry
+handlers ..> Router
 @enduml

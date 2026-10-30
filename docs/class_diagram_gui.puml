@@ -1,0 +1,107 @@
+@startuml
+title Диаграмма классов: графический интерфейс
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+left to right direction
+
+package "gui" {
+  class App {
+    +root
+    +settings
+    +log_queue
+    +run()
+    +close()
+    +apply_theme(name)
+  }
+  class ClientTab {
+    +url_var
+    +method_var
+    +busy
+    +send()
+    +clear()
+  }
+  class ServerTab {
+    +port_var
+    +start_server()
+    +stop_server()
+    +open_browser()
+  }
+  class SettingsTab {
+    +apply()
+    +append_log(line)
+  }
+  class HeaderTable {
+    +add_row()
+    +remove_selected()
+    +get_rows()
+  }
+  class LogTable {
+    +MAX_ROWS
+    +append(entry)
+    +clear()
+  }
+  class HighlightedText {
+    +set_text(content, kind)
+    +set_error(message)
+  }
+  class StatusIndicator {
+    +set_running(running)
+  }
+  class RequestWorker {
+    +submit(spec, results): Thread
+  }
+  class RequestSpec <<dataclass>> {
+    +method
+    +url
+    +headers
+    +body
+    +timeout
+  }
+  class RequestResult <<dataclass>> {
+    +spec
+    +response
+    +error
+    +elapsed_ms
+  }
+  class Settings <<dataclass>> {
+    +timeout
+    +max_redirects
+    +theme
+    +save_history
+  }
+  class HistoryStore {
+    +path
+    +load()
+    +add(entry)
+  }
+  class QueueLogHandler {
+    +target
+    +emit(record)
+  }
+}
+package "core (см. другую диаграмму)" {
+  class HttpClient <<external>>
+  class HttpServer <<external>>
+  class LogEntry <<external>>
+}
+
+App *-- ClientTab
+App *-- ServerTab
+App *-- SettingsTab
+App --> Settings
+App ..> QueueLogHandler
+ClientTab *-- HeaderTable
+ClientTab *-- HighlightedText
+ClientTab --> RequestWorker
+ClientTab --> HistoryStore
+ClientTab --> Settings
+ServerTab *-- LogTable
+ServerTab *-- StatusIndicator
+ServerTab --> HttpServer
+SettingsTab --> Settings
+SettingsTab *-- HighlightedText
+RequestWorker --> HttpClient
+RequestWorker ..> RequestSpec
+RequestWorker ..> RequestResult
+LogTable ..> LogEntry
+@enduml

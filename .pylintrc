@@ -1,0 +1,20 @@
+[MASTER]
+ignore=.venv,__pycache__
+
+[FORMAT]
+max-line-length=100
+
+[BASIC]
+# Короткие предметные имена (x, y, ms, e) и имена констант-экземпляров (logger) допустимы.
+variable-rgx=[a-z_][a-z0-9_]*$
+argument-rgx=[a-z_][a-z0-9_]*$
+attr-rgx=[a-z_][a-z0-9_]*$
+class-attribute-rgx=[A-Za-z_][A-Za-z0-9_]*$
+const-rgx=[A-Za-z_][A-Za-z0-9_]*$
+
+[MESSAGES CONTROL]
+# R0903: небольшие классы и dataclass без публичных методов — осознанный выбор.
+# R0902: серверу и Tk-вкладкам нужно несколько ссылок на внутренние объекты.
+# R0913/R0917: конструкторы с параметрами по умолчанию читаются лучше, чем объект-конфиг.
+disable=too-few-public-methods,too-many-instance-attributes,too-many-arguments,
+        too-many-positional-arguments,too-many-statements,too-many-locals
